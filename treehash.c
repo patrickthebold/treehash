@@ -22,7 +22,8 @@ void combine(sha *a, sha *b) {
   SHA256_Final(a->sha, &ctx);
 }
 
-void read_one_meg(unsigned char *buf, int bufsize, unsigned char *sha) {
+void read_one_meg(unsigned char *sha) {
+  unsigned char buf[BUFSIZ];
   size_t mb = 1024 * 1024;
   size_t total_amount_read = 0;
   size_t amount_read = 0;
@@ -31,7 +32,7 @@ void read_one_meg(unsigned char *buf, int bufsize, unsigned char *sha) {
   SHA256_CTX ctx;
   SHA256_Init(&ctx);
   while(!eof && total_amount_read < mb) {
-    to_read = min(mb - total_amount_read, bufsize);
+    to_read = min(mb - total_amount_read, BUFSIZ);
     amount_read = fread(buf, 1, to_read, stdin);
     eof = amount_read != to_read;
     total_amount_read += amount_read;
@@ -69,14 +70,13 @@ int stdin_has_data() {
 }
 
 int main(int argc, char **argv) {
-  unsigned char buffer[BUFSIZ];
   sha* head;
   sha* cur;
   cur = head = (sha *) calloc(sizeof(sha), 1);
   while (stdin_has_data()) {
     cur->next = (sha *) calloc(sizeof(sha), 1);
     cur = cur->next;
-    read_one_meg(buffer, BUFSIZ, cur->sha);
+    read_one_meg(cur->sha);
   } 
   reduce(head->next);
   printbuf(head->next->sha);
