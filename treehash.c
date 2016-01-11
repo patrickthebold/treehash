@@ -63,7 +63,7 @@ void reduce(sha *head) {
 }
 
 int stdin_has_data() {
-  char c;
+  int c;
   c = fgetc(stdin);
   ungetc(c, stdin);
   return c != EOF;
