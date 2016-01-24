@@ -22,7 +22,7 @@ upload () {
   echo "file num: $file_num"
   start=$(( $SPLIT_SIZE * $file_num ))
   end=$(( $start + $(bytes "$file") - 1 ))
-  aws glacier upload-multipart-part --account-id - --vault-name $VAULT --upload-id $2 --range "bytes $start-$end/$4" --body "$file"
+  aws glacier upload-multipart-part --account-id - --vault-name $VAULT --upload-id $2 --range "bytes $start-$end/$4" --body "$file" --checksum $(cat "$file" | treehash)
 }
 
 initiate () {
@@ -45,7 +45,7 @@ cleanup () {
 
 check_time () {
   now=$(date "+%H")
-  if [ $now -lt $END_TIME -a $now -gt $START_TIME ]; then
+  if [ $now -gt $END_TIME -a $now -le $START_TIME ]; then
     exit 1
   fi
 }
