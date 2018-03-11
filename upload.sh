@@ -4,6 +4,29 @@ VAULT=glacier_valut
 START_TIME=23
 END_TIME=8
 prefix_length=${#PREFIX}
+
+function fail {
+  echo $1 >&2
+  exit 1
+}
+
+function retry {
+  local n=1
+  local max=5
+  local delay=15
+  while true; do
+    "$@" && break || {
+      if [[ $n -lt $max ]]; then
+        ((n++))
+        echo "Command failed. Attempt $n/$max:"
+        sleep $delay;
+      else
+        fail "The command has failed after $n attempts."
+      fi
+    }
+  done
+}
+
 decode () {
   ret=0
   place=1
@@ -22,7 +45,7 @@ upload () {
   echo "file num: $file_num"
   start=$(( $SPLIT_SIZE * $file_num ))
   end=$(( $start + $(bytes "$file") - 1 ))
-  aws glacier upload-multipart-part --account-id - --vault-name $VAULT --upload-id $2 --range "bytes $start-$end/$4" --body "$file" --checksum $(cat "$file" | treehash)
+  retry aws glacier upload-multipart-part --account-id - --vault-name $VAULT --upload-id $2 --range "bytes $start-$end/$4" --body "$file" --checksum $(cat "$file" | treehash)
 }
 
 initiate () {
